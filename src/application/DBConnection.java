@@ -451,8 +451,8 @@ public class DBConnection {
             	purchased_item.ID = result.getInt(1);
             	purchased_item.name = result.getString(2);
             	purchased_item.description = result.getString(3);
-            	purchased_item.quantity = result.getDouble(4);
-            	purchased_item.cost = result.getDouble(5);
+            	purchased_item.quantity = result.getFloat(4);
+            	purchased_item.cost = result.getFloat(5);
             	purchased_item.date = result.getString(6);
             	
             	purchased_items.add(purchased_item);

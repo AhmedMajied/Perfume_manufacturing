@@ -306,8 +306,8 @@ public class UpdateScene {
 			}
 			
 			try { // handle not numeric inputs
-				purchased_item.quantity = Double.parseDouble(units_quantity_field.getText());
-				purchased_item.cost = Double.parseDouble(units_cost_field.getText());
+				purchased_item.quantity = Float.parseFloat(units_quantity_field.getText());
+				purchased_item.cost = Float.parseFloat(units_cost_field.getText());
 			}catch(NumberFormatException ex) {
 				AlertBox.display("Fields contain invalid inputs");
 				return;
@@ -329,7 +329,7 @@ public class UpdateScene {
 						String[] costs = liquid.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Double.parseDouble(costs[0]) == purchased_item.cost/purchased_item.quantity 
+						if(Float.parseFloat(costs[0]) == purchased_item.cost/purchased_item.quantity 
 								|| liquid.quantity1 == 0) {
 							liquid.quantity1 += purchased_item.quantity;
 							liquid.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
@@ -358,7 +358,7 @@ public class UpdateScene {
 						String[] costs = flavor.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Double.parseDouble(costs[0]) == purchased_item.cost/purchased_item.quantity
+						if(Float.parseFloat(costs[0]) == purchased_item.cost/purchased_item.quantity
 								|| flavor.quantity1 == 0) {
 							flavor.quantity1 += purchased_item.quantity;
 							flavor.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
@@ -387,7 +387,7 @@ public class UpdateScene {
 						String[] costs = bottle.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Double.parseDouble(costs[0]) == purchased_item.cost/purchased_item.quantity) {
+						if(Float.parseFloat(costs[0]) == purchased_item.cost/purchased_item.quantity) {
 							bottle.quantity1 += purchased_item.quantity;
 						}
 						else if(bottle.quantity1 == 0) {
