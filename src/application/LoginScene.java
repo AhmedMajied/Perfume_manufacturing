@@ -27,6 +27,7 @@ public class LoginScene {
 		password.setFont(Font.font("Verdana",FontWeight.BOLD,15));
 		
 		PasswordField password_field = new PasswordField();
+		password_field.setAlignment(Pos.CENTER);
 		
 		HBox hbox = new HBox(15);
 		hbox.setAlignment(Pos.CENTER);

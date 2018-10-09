@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -20,6 +21,7 @@ public class NewBottleScene{
 	private NewBottleScene() {}
 	
 	public static void display(){
+		int window_width = 780;
 		
 		// get all bottles
 		Vector<Bottle> bottles = DBConnection.retrieve_all_bottles();
@@ -31,8 +33,15 @@ public class NewBottleScene{
 		vbox1.getChildren().addAll(liquid_name,liquid_name_field);
 		vbox1.setAlignment(Pos.CENTER);
 		
-		// bottle size
+		// mix liquid name
 		VBox vbox2 = new VBox(10);
+		Label mix_liquid_name = new Label("Mix Liquid name");
+		TextField mix_liquid_name_field = new TextField();
+		vbox2.getChildren().addAll(mix_liquid_name,mix_liquid_name_field);
+		vbox2.setAlignment(Pos.CENTER);
+		
+		// bottle size
+		VBox vbox3 = new VBox(10);
 		Label bottle_size = new Label("Bottle Size");
 		ChoiceBox<String> bottle_size_field = new ChoiceBox<>();
 		
@@ -41,21 +50,31 @@ public class NewBottleScene{
 				bottle_size_field.getItems().add(bottle.name);
 		}
 		
-		Label ml = new Label("ml");
+		vbox3.getChildren().addAll(bottle_size,bottle_size_field);
+		vbox3.setAlignment(Pos.CENTER);
 		
-		// size in ml
-		HBox size_in_ml = new HBox(5);
-		size_in_ml.getChildren().addAll(bottle_size_field,ml);
-		size_in_ml.setAlignment(Pos.BASELINE_CENTER);
+		// mix bottle check box
+		CheckBox mix_checkbox = new CheckBox("Mix Bottle");
+		HBox mix_checkbox_box = new HBox();
+		mix_checkbox_box.setAlignment(Pos.CENTER);
+		mix_checkbox_box.getChildren().add(mix_checkbox);
 		
-		vbox2.getChildren().addAll(bottle_size,size_in_ml);
-		vbox2.setAlignment(Pos.CENTER);
 		
 		// combine all fields
 		HBox hbox = new HBox(20);
 		hbox.setPadding(new Insets(0,8,0,8));
 		hbox.setAlignment(Pos.CENTER);
-		hbox.getChildren().addAll(vbox1,vbox2);
+		hbox.getChildren().addAll(vbox1,vbox3);
+		
+		// show mix liquid field or hide it when check box is selected 
+		mix_checkbox.selectedProperty().addListener(e->{
+		    if(mix_checkbox.isSelected()) {
+		    	hbox.getChildren().add(vbox2);
+		    }
+		    else {
+		    	hbox.getChildren().remove(2);
+		    }
+		});
 		
 		// control buttons 
 		HBox buttons_box = new HBox(10);
@@ -65,7 +84,10 @@ public class NewBottleScene{
 		Button create_button = new Button("Create");
 		create_button.setDisable(true);
 		create_button.setOnAction(e-> {
-			NewBottleSecondaryScene.display(liquid_name_field.getText(),bottle_size_field.getValue());
+			if(mix_checkbox.isSelected())
+				NewBottleSecondaryScene.display(liquid_name_field.getText(),mix_liquid_name_field.getText(),bottle_size_field.getValue());
+			else
+				NewBottleSecondaryScene.display(liquid_name_field.getText(),"notmix",bottle_size_field.getValue());
 		});
 		
 		// back button
@@ -81,15 +103,15 @@ public class NewBottleScene{
 		VBox control_box = new VBox(8);
 		control_box.setStyle("-fx-background-color: white; -fx-border-style: solid; -fx-border-radius: 5px;");
 		control_box.setPadding(new Insets(8,0,8,0));
-		control_box.setMaxWidth(300);
-		control_box.getChildren().addAll(hbox,buttons_box);
+		control_box.setMaxWidth(400);
+		control_box.getChildren().addAll(hbox,mix_checkbox_box,buttons_box);
 		
 		VBox root = new VBox(30);
 		root.setAlignment(Pos.BASELINE_CENTER);
 		root.setPadding(new Insets(10,0,10,0));
 		root.getChildren().addAll(control_box,prepare_liquids_pane(liquid_name_field));
 		
-		scene = new Scene(root,700,420);		
+		scene = new Scene(root,window_width,420);		
 		Main.stage.setScene(scene);
 		Main.stage.centerOnScreen();
 	}
@@ -101,12 +123,12 @@ public class NewBottleScene{
 		// table header
 		HBox header = new HBox(1);
 		header.getChildren().addAll(
-				Utility.prepare_cell("Name"),
-				Utility.prepare_cell("Quality"),
-				Utility.prepare_cell("Type"),
-				Utility.prepare_cell("Category"),
-				Utility.prepare_cell("Quantity"),
-				Utility.prepare_cell("Gram Cost")
+				Utility.prepare_cell("Name",true),
+				Utility.prepare_cell("Quality",false),
+				Utility.prepare_cell("Type",false),
+				Utility.prepare_cell("Category",false),
+				Utility.prepare_cell("Quantity",false),
+				Utility.prepare_cell("Gram Cost",false)
 		);
 		
 		// header style
@@ -115,18 +137,18 @@ public class NewBottleScene{
 		
 		// table data
 		VBox table_data = new VBox(5);
-		table_data.setPrefWidth(690);
+		table_data.setPrefWidth(768);
 		
 		// liquids data 
 		for(int liquid_index=0;liquid_index<all_liquids.size();liquid_index++) {
 			HBox hbox = new HBox(1);
 			hbox.getChildren().addAll(
-					Utility.prepare_cell(all_liquids.get(liquid_index).name),
-					Utility.prepare_cell(""+all_liquids.get(liquid_index).quality),
-					Utility.prepare_cell(all_liquids.get(liquid_index).type),
-					Utility.prepare_cell(all_liquids.get(liquid_index).category),
-					Utility.prepare_cell(all_liquids.get(liquid_index).get_diff_quantities()),
-					Utility.prepare_cell(all_liquids.get(liquid_index).unit_costs)
+					Utility.prepare_cell(all_liquids.get(liquid_index).name,true),
+					Utility.prepare_cell(""+all_liquids.get(liquid_index).quality,false),
+					Utility.prepare_cell(all_liquids.get(liquid_index).type,false),
+					Utility.prepare_cell(all_liquids.get(liquid_index).category,false),
+					Utility.prepare_cell(all_liquids.get(liquid_index).get_diff_quantities(),false),
+					Utility.prepare_cell(all_liquids.get(liquid_index).unit_costs,false)
 			);
 			
 			// data row style
@@ -134,7 +156,7 @@ public class NewBottleScene{
 			hbox.setStyle("-fx-background-color: white;");
 			
 			// row click action
-			final String selected_liquid_name = all_liquids.get(liquid_index).name;
+			String selected_liquid_name = all_liquids.get(liquid_index).name;
 			hbox.setOnMouseClicked(e->{
 				liquid_name_field.setText(selected_liquid_name);
 			});

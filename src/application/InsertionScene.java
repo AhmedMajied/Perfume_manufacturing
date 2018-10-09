@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -17,6 +18,7 @@ public class InsertionScene {
 		
 		Stage window = new Stage();
 		window.initModality(Modality.APPLICATION_MODAL);
+		window.getIcons().add(new Image("icon.png"));
 		window.setResizable(false); // make window not resizable
 		window.setTitle("Insert new "+material);
 		
@@ -25,13 +27,13 @@ public class InsertionScene {
 		
 		if(material.equals("liquid")) {
 			title_row.getChildren().addAll(
-					Utility.prepare_cell("Name"),
-					Utility.prepare_cell("Type"),
-					Utility.prepare_cell("Category"),
-					Utility.prepare_cell("Quality"),
-					Utility.prepare_cell("Quantity"),
-					Utility.prepare_cell("Gram Cost"),
-					Utility.prepare_cell("Reorder Quantity")
+					Utility.prepare_cell("Name",true),
+					Utility.prepare_cell("Type",false),
+					Utility.prepare_cell("Category",false),
+					Utility.prepare_cell("Quality",false),
+					Utility.prepare_cell("Quantity",false),
+					Utility.prepare_cell("Gram Cost",false),
+					Utility.prepare_cell("Reorder Quantity",false)
 			);
 		}
 		else if (material.equals("flavor")) {
@@ -51,8 +53,9 @@ public class InsertionScene {
 			return;
 		}
 		
-		for(int i=0;i<title_row.getChildren().size();i++) {
-			new_item_row.getChildren().add(Utility.prepare_editable_cell("",true));
+		new_item_row.getChildren().add(Utility.prepare_editable_cell("",true,true));
+		for(int i=1;i<title_row.getChildren().size();i++) {
+			new_item_row.getChildren().add(Utility.prepare_editable_cell("",true,false));
 		}
 		
 		// save new item button
@@ -71,7 +74,7 @@ public class InsertionScene {
 					Double.parseDouble(new_liquid.unit_costs); // check if its a number
 					new_liquid.reoreder_quantity = Double.parseDouble(((TextField)new_item_row.getChildren().get(6)).getText());
 					
-					DBConnection.save_new_liquid(new_liquid);
+					new_liquid.ID = DBConnection.save_new_liquid(new_liquid);
 					UpdateScene.liquids.add(new_liquid);
 				}
 				
@@ -95,7 +98,7 @@ public class InsertionScene {
 			UpdateScene.display();
 		});
 		
-		window.setScene(new Scene(root,1000,110));
+		window.setScene(new Scene(root,900,110));
 		window.showAndWait();
 	}
 }

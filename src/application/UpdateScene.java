@@ -24,6 +24,7 @@ public class UpdateScene {
 	private UpdateScene() {}
 	
 	public static void display() {
+		int window_width = 900;
 		
 		// material items choice box
 		ChoiceBox<String> material_items_field = new ChoiceBox<>();
@@ -39,7 +40,7 @@ public class UpdateScene {
 		
 		// table content
 		VBox table_data = new VBox(5);
-		table_data.setPrefWidth(1000);
+		table_data.setPrefWidth(window_width);
 		
 		// default is liquid
 		switch_material(current_material, table_header, table_data,material_items_field,description_field);
@@ -94,7 +95,7 @@ public class UpdateScene {
 								new_units_section);
 		VBox.setMargin(new_units_section, new Insets(8,13,0,13));
 		
-		scene = new Scene(root,1000,430);
+		scene = new Scene(root,window_width,430);
 		Main.stage.setScene(scene);
 		Main.stage.centerOnScreen();
 	}
@@ -113,25 +114,25 @@ public class UpdateScene {
 		
 		if(material.equals("liquid")) {
 			table_header.getChildren().addAll(
-					Utility.prepare_cell("Name"),
-					Utility.prepare_cell("Type"),
-					Utility.prepare_cell("Category"),
-					Utility.prepare_cell("Quality"),
-					Utility.prepare_cell("Quantity"),
-					Utility.prepare_cell("Gram Cost"),
-					Utility.prepare_cell("Reorder Quantity")
+					Utility.prepare_cell("Name",true),
+					Utility.prepare_cell("Type",false),
+					Utility.prepare_cell("Category",false),
+					Utility.prepare_cell("Quality",false),
+					Utility.prepare_cell("Quantity",false),
+					Utility.prepare_cell("Gram Cost",false),
+					Utility.prepare_cell("Reorder Quantity",false)
 			);
 			
 			for(Liquid liquid: liquids) {
 				HBox row = new HBox(1);
 				row.getChildren().addAll(
-						Utility.prepare_editable_cell(liquid.name,true),
-						Utility.prepare_editable_cell(liquid.type,true),
-						Utility.prepare_editable_cell(liquid.category,true),
-						Utility.prepare_editable_cell(liquid.quality+"",true),
-						Utility.prepare_editable_cell(liquid.get_diff_quantities(),false),
-						Utility.prepare_editable_cell(liquid.unit_costs,false),
-						Utility.prepare_editable_cell(liquid.reoreder_quantity+"",true)
+						Utility.prepare_editable_cell(liquid.name,true,true),
+						Utility.prepare_editable_cell(liquid.type,true,false),
+						Utility.prepare_editable_cell(liquid.category,true,false),
+						Utility.prepare_editable_cell(liquid.quality+"",true,false),
+						Utility.prepare_editable_cell(liquid.get_diff_quantities(),false,false),
+						Utility.prepare_editable_cell(liquid.unit_costs,false,false),
+						Utility.prepare_editable_cell(liquid.reoreder_quantity+"",true,false)
 				);
 				
 				table_data.getChildren().add(row);
@@ -144,19 +145,19 @@ public class UpdateScene {
 		}
 		else if(material.equals("flavor")) {
 			table_header.getChildren().addAll(
-					Utility.prepare_cell("Name"),
-					Utility.prepare_cell("Quantity"),
-					Utility.prepare_cell("Gram Cost"),
-					Utility.prepare_cell("Reorder Quantity")
+					Utility.prepare_cell("Name",true),
+					Utility.prepare_cell("Quantity",true),
+					Utility.prepare_cell("Gram Cost",true),
+					Utility.prepare_cell("Reorder Quantity",true)
 			);
 			
 			for(Flavor flavor: flavors) {
 				HBox row = new HBox(1);
 				row.getChildren().addAll(
-						Utility.prepare_editable_cell(flavor.name,true),
-						Utility.prepare_editable_cell(flavor.get_diff_quantities(),false),
-						Utility.prepare_editable_cell(flavor.unit_costs,false),
-						Utility.prepare_editable_cell(flavor.reoreder_quantity+"",true)
+						Utility.prepare_editable_cell(flavor.name,true,true),
+						Utility.prepare_editable_cell(flavor.get_diff_quantities(),false,true),
+						Utility.prepare_editable_cell(flavor.unit_costs,false,true),
+						Utility.prepare_editable_cell(flavor.reoreder_quantity+"",true,true)
 				);
 				
 				table_data.getChildren().add(row);
@@ -169,21 +170,21 @@ public class UpdateScene {
 		}
 		else{ // material is bottle
 			table_header.getChildren().addAll(
-					Utility.prepare_cell("Size"),
-					Utility.prepare_cell("Type"),
-					Utility.prepare_cell("Quantity"),
-					Utility.prepare_cell("Cost"),
-					Utility.prepare_cell("Reorder Quantity")
+					Utility.prepare_cell("Size",true),
+					Utility.prepare_cell("Type",true),
+					Utility.prepare_cell("Quantity",true),
+					Utility.prepare_cell("Cost",true),
+					Utility.prepare_cell("Reorder Quantity",true)
 			);
 			
 			for(Bottle bottle: bottles) {
 				HBox row = new HBox(1);
 				row.getChildren().addAll(
-						Utility.prepare_editable_cell(bottle.name,true),
-						Utility.prepare_editable_cell(bottle.type,true),
-						Utility.prepare_editable_cell(bottle.get_diff_quantities(),false),
-						Utility.prepare_editable_cell(bottle.unit_costs,false),
-						Utility.prepare_editable_cell(bottle.reoreder_quantity+"",true)
+						Utility.prepare_editable_cell(bottle.name,true,true),
+						Utility.prepare_editable_cell(bottle.type,true,true),
+						Utility.prepare_editable_cell(bottle.get_diff_quantities(),false,true),
+						Utility.prepare_editable_cell(bottle.unit_costs,false,true),
+						Utility.prepare_editable_cell(bottle.reoreder_quantity+"",true,true)
 				);
 				
 				table_data.getChildren().add(row);
@@ -306,8 +307,8 @@ public class UpdateScene {
 			}
 			
 			try { // handle not numeric inputs
-				purchased_item.quantity = Float.parseFloat(units_quantity_field.getText());
-				purchased_item.cost = Float.parseFloat(units_cost_field.getText());
+				purchased_item.quantity = Double.parseDouble(units_quantity_field.getText());
+				purchased_item.cost = Double.parseDouble(units_cost_field.getText());
 			}catch(NumberFormatException ex) {
 				AlertBox.display("Fields contain invalid inputs");
 				return;
@@ -329,18 +330,18 @@ public class UpdateScene {
 						String[] costs = liquid.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Float.parseFloat(costs[0]) == purchased_item.cost/purchased_item.quantity 
+						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price() 
 								|| liquid.quantity1 == 0) {
 							liquid.quantity1 += purchased_item.quantity;
-							liquid.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
+							liquid.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(liquid.quantity1 == 0) {
 							liquid.quantity1 += purchased_item.quantity;
-							liquid.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
+							liquid.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(costs.length == 1) { // there is only one cost (new cost inserted)
 							liquid.quantity2 = purchased_item.quantity;
-							liquid.unit_costs = costs[0] + "," + (purchased_item.cost/purchased_item.quantity); 
+							liquid.unit_costs = costs[0] + "," + (purchased_item.get_unit_price()); 
 						}
 						else { // same cost as second cost
 							liquid.quantity2 += purchased_item.quantity;
@@ -358,18 +359,18 @@ public class UpdateScene {
 						String[] costs = flavor.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Float.parseFloat(costs[0]) == purchased_item.cost/purchased_item.quantity
+						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price()
 								|| flavor.quantity1 == 0) {
 							flavor.quantity1 += purchased_item.quantity;
-							flavor.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
+							flavor.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(flavor.quantity1 == 0) {
 							flavor.quantity1 += purchased_item.quantity;
-							flavor.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
+							flavor.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(costs.length == 1) { // there is only one cost (new cost inserted)
 							flavor.quantity2 = purchased_item.quantity;
-							flavor.unit_costs = costs[0] + "," + (purchased_item.cost/purchased_item.quantity); 
+							flavor.unit_costs = costs[0] + "," + (purchased_item.get_unit_price()); 
 						}
 						else { // same cost as second cost
 							flavor.quantity2 += purchased_item.quantity;
@@ -387,16 +388,16 @@ public class UpdateScene {
 						String[] costs = bottle.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Float.parseFloat(costs[0]) == purchased_item.cost/purchased_item.quantity) {
+						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price()) {
 							bottle.quantity1 += purchased_item.quantity;
 						}
 						else if(bottle.quantity1 == 0) {
 							bottle.quantity1 += purchased_item.quantity;
-							bottle.unit_costs = ""+(purchased_item.cost/purchased_item.quantity);
+							bottle.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(costs.length == 1) { // there is only one cost (new cost inserted)
 							bottle.quantity2 = purchased_item.quantity;
-							bottle.unit_costs = costs[0] + "," + (purchased_item.cost/purchased_item.quantity); 
+							bottle.unit_costs = costs[0] + "," + (purchased_item.get_unit_price()); 
 						}
 						else { // same cost as second cost
 							bottle.quantity2 += purchased_item.quantity;
@@ -415,7 +416,7 @@ public class UpdateScene {
 		Label new_quantity = new Label("New Quantity:");
 		new_quantity.setPadding(new Insets(0,2,5,0));
 		
-		HBox new_quantity_control = new HBox(5);
+		HBox new_quantity_control = new HBox(7);
 		new_quantity_control.setAlignment(Pos.BOTTOM_CENTER);
 		new_quantity_control.setStyle("-fx-background-color: white; -fx-border-style: solid; -fx-border-radius: 5px;");
 		new_quantity_control.setPadding(new Insets(8,0,8,0));

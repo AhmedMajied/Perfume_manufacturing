@@ -1,8 +1,8 @@
 package application;
 	
 import javafx.application.Application;
-import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
 
 public class Main extends Application {
 	
@@ -25,6 +25,11 @@ public class Main extends Application {
         
         stage.setScene(new LoginScene().display());
         
+        /*float x = 19.5f;
+        float y = 30.23f;
+        System.out.println(Math.round(y/x * 100.0)/100.0);
+        System.out.println(y/x);
+        */
 		stage.setOnCloseRequest(e -> DBConnection.terminateConnection());
 		stage.show();	
 		
@@ -35,3 +40,4 @@ public class Main extends Application {
 	}
 	
 }
+

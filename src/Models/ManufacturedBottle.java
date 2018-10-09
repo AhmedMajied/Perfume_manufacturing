@@ -6,5 +6,6 @@ public class ManufacturedBottle {
 	public double used_grams;
 	public double cost;
 	public double selling_price;
+	public String description;
 	public String date;
 }

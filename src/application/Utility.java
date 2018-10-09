@@ -19,7 +19,7 @@ import jxl.write.biff.RowsExceededException;
 
 public class Utility {
 	
-	public static Pane prepare_cell(String text){
+	public static Pane prepare_cell(String text,boolean extendable){
 		
 		Pane cell = new Pane();
 		
@@ -28,7 +28,11 @@ public class Utility {
 		label.prefWidthProperty().bind(cell.widthProperty());
 		
 		cell.getChildren().add(label);
-		HBox.setHgrow(cell, Priority.ALWAYS);
+		
+		if(extendable)
+			HBox.setHgrow(cell, Priority.ALWAYS);
+		else
+			cell.setPrefWidth(120);
 		
 		//cell.setStyle("-fx-border-style: solid inside;"+"-fx-border-color: red;");
 		//label.setStyle("-fx-border-style: solid inside;"+"-fx-border-color: blue;");
@@ -36,7 +40,7 @@ public class Utility {
 		return cell;
 	}
 	
-	public static TextField prepare_editable_cell(String text,boolean editable) {
+	public static TextField prepare_editable_cell(String text,boolean editable,boolean extendable) {
 		
 		TextField field = new TextField(text);
 		field.setAlignment(Pos.CENTER);
@@ -44,13 +48,16 @@ public class Utility {
 		if(!editable)
 			field.setDisable(true);
 		
-		HBox.setHgrow(field, Priority.ALWAYS);
+		if(extendable)
+			HBox.setHgrow(field, Priority.ALWAYS);
+		else
+			field.setPrefWidth(120);
 		
 		return field;
 	}
 	
 	public static void generate_excel_file(){
-		Vector<ManufacturedBottle> bottles = DBConnection.retrieve_manufactured_bottles();
+		Vector<ManufacturedBottle> bottles = DBConnection.retrieve_sold_bottles();
 		
 		try{
 			WritableWorkbook workbook = Workbook.createWorkbook(new File("sold bottles report.xls"));
@@ -67,7 +74,8 @@ public class Utility {
 			sheet.addCell(new jxl.write.Label(2,0,"Used Grams",header_cell_format));
 			sheet.addCell(new jxl.write.Label(3,0,"Cost",header_cell_format));
 			sheet.addCell(new jxl.write.Label(4,0,"Selling Price",header_cell_format));
-			sheet.addCell(new jxl.write.Label(5,0,"Date",header_cell_format));
+			sheet.addCell(new jxl.write.Label(5,0,"Description",header_cell_format));
+			sheet.addCell(new jxl.write.Label(6,0,"Date",header_cell_format));
 
 			// table cell style
 			WritableCellFormat data_cell_format = new WritableCellFormat();
@@ -80,7 +88,8 @@ public class Utility {
 				sheet.addCell(new Number(2,row+1,bottles.get(row).used_grams,data_cell_format));
 				sheet.addCell(new Number(3,row+1,bottles.get(row).cost,data_cell_format));
 				sheet.addCell(new Number(4,row+1,bottles.get(row).selling_price,data_cell_format));
-				sheet.addCell(new jxl.write.Label(5,row+1,bottles.get(row).date,data_cell_format));
+				sheet.addCell(new jxl.write.Label(5,row+1,bottles.get(row).description,data_cell_format));
+				sheet.addCell(new jxl.write.Label(6,row+1,bottles.get(row).date,data_cell_format));
 			}
 
 			workbook.write();

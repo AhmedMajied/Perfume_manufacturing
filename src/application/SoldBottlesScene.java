@@ -18,6 +18,7 @@ public class SoldBottlesScene {
 	private SoldBottlesScene() {}
 	
 	public static void display() {
+		int window_width = 1007;
 		
 		// table header
 		HBox table_header = new HBox();
@@ -25,28 +26,30 @@ public class SoldBottlesScene {
 		table_header.setStyle("-fx-background-color: white; -fx-border-style: solid; -fx-border-radius: 5px;");
 		
 		table_header.getChildren().addAll(
-				Utility.prepare_cell("Bottle Size"),
-				Utility.prepare_cell("Liquid Name"),
-				Utility.prepare_cell("Used Grams"),
-				Utility.prepare_cell("Cost"),
-				Utility.prepare_cell("Selling Price"),
-				Utility.prepare_cell("Date")
+				Utility.prepare_cell("Bottle Size",false),
+				Utility.prepare_cell("Liquid Name",true),
+				Utility.prepare_cell("Used Grams",false),
+				Utility.prepare_cell("Cost",false),
+				Utility.prepare_cell("Selling Price",false),
+				Utility.prepare_cell("Description",true),
+				Utility.prepare_cell("Date",false)
 		);
 		
 		// table data
-		Vector<ManufacturedBottle> bottles = DBConnection.retrieve_manufactured_bottles();
+		Vector<ManufacturedBottle> bottles = DBConnection.retrieve_sold_bottles();
 		
 		VBox table_data = new VBox(5);
-		table_data.setPrefWidth(800);
+		table_data.setPrefWidth(window_width);
 		for(ManufacturedBottle bottle: bottles) {
 			HBox row = new HBox();
 			row.getChildren().addAll(
-					Utility.prepare_cell(bottle.name),
-					Utility.prepare_cell(bottle.liquid_name),
-					Utility.prepare_cell(bottle.used_grams+""),
-					Utility.prepare_cell(bottle.cost+""),
-					Utility.prepare_cell(bottle.selling_price+""),
-					Utility.prepare_cell(bottle.date)
+					Utility.prepare_cell(bottle.name,false),
+					Utility.prepare_cell(bottle.liquid_name,true),
+					Utility.prepare_cell(bottle.used_grams+"",false),
+					Utility.prepare_cell(bottle.cost+"",false),
+					Utility.prepare_cell(bottle.selling_price+"",false),
+					Utility.prepare_cell(bottle.description,true),
+					Utility.prepare_cell(bottle.date,false)
 			);
 			
 			// row style
@@ -80,7 +83,7 @@ public class SoldBottlesScene {
 		VBox root = new VBox(10);
 		root.getChildren().addAll(table_header,scrollPane,buttons_box);
 		
-		scene = new Scene(root,800,300);
+		scene = new Scene(root,window_width,300);
 		Main.stage.setScene(scene);
 		Main.stage.centerOnScreen();
 	}

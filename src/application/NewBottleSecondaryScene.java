@@ -20,14 +20,21 @@ public class NewBottleSecondaryScene {
 	
 	private static Scene scene = null;
 	
-	public static void display(String liquid_name,String bottle_size){
+	public static void display(String liquid_name,String mix_liquid_name,String bottle_size){
 		Button agree_button = new Button("Agree");
 		
 		// retrieve liquid, Bottle and flavors
 		Liquid selected_liquid = DBConnection.retrieve_liquid(liquid_name);
+		Liquid selected_mix_liquid = DBConnection.retrieve_liquid(mix_liquid_name);
 		Bottle selected_bottle = DBConnection.retrieve_bottle(bottle_size);
 		Vector<Flavor> flavors = DBConnection.retrieve_bottle_flavors(selected_bottle.ID);
 		
+		// check if mix liquid name not found
+		if(!mix_liquid_name.equals("notmix") && selected_mix_liquid == null) {
+				AlertBox.display("Wrong Mix Liquid Name");
+				return;
+		}
+			
 		// check if liquid name not found
 		if(selected_liquid == null) {
 			AlertBox.display("Wrong Liquid Name");
@@ -37,6 +44,12 @@ public class NewBottleSecondaryScene {
 		// check if there enough grams of selected liquid
 		if(selected_liquid.get_total_quantity() < selected_bottle.liquid_used_grams) {
 			AlertBox.display("There is no enough grams of selected Liquid");
+			return;
+		}
+		
+		// check if there enough grams of selected mix liquid
+		if(selected_liquid.get_total_quantity() < 3) {
+			AlertBox.display("There is no enough grams of selected Mix Liquid");
 			return;
 		}
 		
@@ -65,6 +78,24 @@ public class NewBottleSecondaryScene {
         liquid.getChildren().addAll(liquid_grams,liquid_grams_spinner);
         liquid.setAlignment(Pos.CENTER);
         
+        // mix liquid grams
+ 		VBox mix_liquid = new VBox(10);
+ 		Label mix_liquid_grams = new Label("Mix Liquid Grams");
+ 		Spinner<Double> mix_liquid_grams_spinner = new Spinner<>();
+ 		SpinnerValueFactory<Double> mix_liquid_boundary = null;
+ 		
+		if(selected_mix_liquid !=null) {
+		    mix_liquid_boundary = 
+			 			new SpinnerValueFactory.DoubleSpinnerValueFactory
+			 			(Math.min(1,selected_mix_liquid.get_total_quantity()), selected_mix_liquid.get_total_quantity(),
+			 					3,0.5); // liquid boundary
+			mix_liquid_grams_spinner.setValueFactory(mix_liquid_boundary);
+			mix_liquid_grams_spinner.setPrefWidth(72);
+		}
+		 
+		mix_liquid.getChildren().addAll(mix_liquid_grams,mix_liquid_grams_spinner);
+		mix_liquid.setAlignment(Pos.CENTER);
+        
         // alcohol grams
  		VBox alcohol = new VBox(10);
  		Label alcohol_grams = new Label("Alcohol Grams");
@@ -80,14 +111,6 @@ public class NewBottleSecondaryScene {
  		
 	    reinforcement.getChildren().addAll(reinforcement_grams,reinforcement_used_grams);
 	    reinforcement.setAlignment(Pos.CENTER);
-        
-	    // improvement grams
-  		VBox improvement = new VBox(10);
-  		Label improvement_grams = new Label("Improvement Grams");
-  		Label improvement_used_grams = new Label(""+Math.min(flavors.get(2).used_grams,flavors.get(2).get_total_quantity()));
-  		
-        improvement.getChildren().addAll(improvement_grams,improvement_used_grams);
-        improvement.setAlignment(Pos.CENTER);
 	    
         // check for valid default grams
         if(flavors.get(0).get_total_quantity() < flavors.get(0).used_grams) {
@@ -99,36 +122,47 @@ public class NewBottleSecondaryScene {
         	reinforcement_used_grams.setTextFill(Color.RED);
         	agree_button.setDisable(true);
         }
- 			
-        if(flavors.get(2).get_total_quantity() < flavors.get(2).used_grams) {
-        	improvement_used_grams.setTextFill(Color.RED);
-        	agree_button.setDisable(true);
-        }
         
         // combine grams fields
         HBox gramsBox = new HBox(10);
         gramsBox.setPadding(new Insets(0,8,0,8));
-        gramsBox.getChildren().addAll(liquid,alcohol,reinforcement,improvement);
+        
+        if(selected_mix_liquid == null)
+        	gramsBox.getChildren().addAll(liquid,alcohol,reinforcement);
+        else {
+        	gramsBox.getChildren().addAll(liquid,mix_liquid,alcohol,reinforcement);
+        	HBox.setHgrow(mix_liquid, Priority.ALWAYS);
+        }
+        	
         HBox.setHgrow(liquid, Priority.ALWAYS);
         HBox.setHgrow(alcohol, Priority.ALWAYS);
         HBox.setHgrow(reinforcement, Priority.ALWAYS);
-        HBox.setHgrow(improvement, Priority.ALWAYS);
         
         // reused bottle check box
       	CheckBox reused_bottle_checkbox = new CheckBox("Reused Bottle");		
       		
         // statistics part
-        double bottle_total_cost = calculate_bottle_cost(selected_bottle, reused_bottle_checkbox.isSelected()
-        			,selected_liquid,liquid_grams_spinner.getValue(), total_packing_cost, flavors);
+        double bottle_total_cost;
+        if(selected_mix_liquid != null) {
+        	bottle_total_cost = calculate_bottle_cost(selected_bottle, reused_bottle_checkbox.isSelected()
+        			,selected_liquid,liquid_grams_spinner.getValue(),selected_mix_liquid,
+        			mix_liquid_grams_spinner.getValue(), 
+        			total_packing_cost, flavors);
+        }
+        else {
+        	bottle_total_cost = calculate_bottle_cost(selected_bottle, reused_bottle_checkbox.isSelected()
+        			,selected_liquid,liquid_grams_spinner.getValue(),null,0, 
+        			total_packing_cost, flavors);
+        }
+        		
         
-        Label packing_cost = new Label("Packing Cost: "+total_packing_cost+" EP");
-        Label EP = new Label("EP");
+        Label packing_cost = new Label("Packing Cost: "+total_packing_cost+" EGP");
         
         // bottle cost
         Label bottle_cost = new Label("Total Bottle Cost:");
         Spinner<Double> bottle_cost_spinner = new Spinner<>();
         SpinnerValueFactory<Double> bottle_cost_boundary = 
-    			new SpinnerValueFactory.DoubleSpinnerValueFactory(0, 1000,(Math.round(bottle_total_cost * 100.0) / 100.0),0.10);
+    			new SpinnerValueFactory.DoubleSpinnerValueFactory(0, 1000,(Math.round(bottle_total_cost * 1000.0) / 1000.0),0.10);
         bottle_cost_spinner.setValueFactory(bottle_cost_boundary);
         bottle_cost_spinner.setPrefWidth(72);
         
@@ -145,7 +179,7 @@ public class NewBottleSecondaryScene {
         
         HBox bottle_cost_box = new HBox(3);
         bottle_cost_box.setAlignment(Pos.CENTER);
-        bottle_cost_box.getChildren().addAll(bottle_cost,bottle_cost_spinner,EP);
+        bottle_cost_box.getChildren().addAll(bottle_cost,bottle_cost_spinner,new Label("EGP"));
            
         // bottle selling price
         Label bottle_selling_price = new Label("Bottle Selling price:");
@@ -158,13 +192,20 @@ public class NewBottleSecondaryScene {
         
         HBox selling_price_box = new HBox(3);
         selling_price_box.setAlignment(Pos.CENTER);
-        selling_price_box.getChildren().addAll(bottle_selling_price,selling_price_spinner,EP);
+        selling_price_box.getChildren().addAll(bottle_selling_price,selling_price_spinner,new Label("EGP"));
         
         // update cost according to liquid grams changing
         liquid_grams_spinner.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
             double new_bottle_total_cost = update_bottle_cost(bottle_cost_spinner.getValue(), 
             		Double.parseDouble(oldValue), Double.parseDouble(newValue),selected_liquid); 
-        	bottle_cost_boundary.setValue((Math.round(new_bottle_total_cost * 100.0) / 100.0));
+        	bottle_cost_boundary.setValue((Math.round(new_bottle_total_cost * 1000.0) / 1000.0));
+        });
+        
+        // update cost according to mix liquid grams changing
+        mix_liquid_grams_spinner.getEditor().textProperty().addListener((obs, oldValue, newValue) -> {
+            double new_bottle_total_cost = update_bottle_cost(bottle_cost_spinner.getValue(), 
+            		Double.parseDouble(oldValue), Double.parseDouble(newValue),selected_mix_liquid); 
+        	bottle_cost_boundary.setValue((Math.round(new_bottle_total_cost * 1000.0) / 1000.0));
         });
         
         // combine all statistics
@@ -185,10 +226,21 @@ public class NewBottleSecondaryScene {
         		return;
         	}
         	
-        	consume_main_materials(selected_bottle, reused_bottle_checkbox.isSelected(), 
-        							selected_liquid,liquid_grams_spinner.getValue());
-        	DBConnection.save_sold_bottle(bottle_cost_spinner.getValue(),selling_price_input,selected_liquid,
-        								selected_bottle,liquid_grams_spinner.getValue(),flavors);
+        	if(selected_mix_liquid == null) {
+        		consume_main_materials(selected_bottle, reused_bottle_checkbox.isSelected(),selected_liquid,
+						liquid_grams_spinner.getValue(),null,0);
+        		DBConnection.save_sold_bottle(bottle_cost_spinner.getValue(),selling_price_input,selected_liquid,
+						selected_bottle,liquid_grams_spinner.getValue(),flavors);
+        	}
+        		
+        	else {
+        		consume_main_materials(selected_bottle, reused_bottle_checkbox.isSelected(),selected_liquid,
+						liquid_grams_spinner.getValue(),selected_mix_liquid,mix_liquid_grams_spinner.getValue());
+        		DBConnection.save_sold_mix_bottle(bottle_cost_spinner.getValue(),selling_price_input,
+        				selected_liquid,liquid_grams_spinner.getValue(),
+        				selected_mix_liquid,mix_liquid_grams_spinner.getValue(), selected_bottle,flavors);
+        	}
+        	
         	NewBottleScene.display();
         });
  		
@@ -207,7 +259,8 @@ public class NewBottleSecondaryScene {
         Main.stage.centerOnScreen();
 	}
 	
-	private static double calculate_bottle_cost(Bottle bottle,boolean reused_bottle,Liquid liquid,double liquid_grams,double packing_cost, Vector<Flavor> flavors){
+	private static double calculate_bottle_cost(Bottle bottle,boolean reused_bottle,Liquid liquid,double liquid_grams,
+													Liquid mix_liquid,double mix_liquid_grams,double packing_cost, Vector<Flavor> flavors){
 		String[] costs;
 		double bottle_total_cost = packing_cost;
 		
@@ -234,6 +287,20 @@ public class NewBottleSecondaryScene {
 		}
 		else {
 			bottle_total_cost += liquid_grams * Double.parseDouble(costs[0]);
+		}
+		
+		// calculate mix liquid cost if it's mix bottle
+		if(mix_liquid != null) {
+			costs = mix_liquid.unit_costs.split(",");
+			
+			if(mix_liquid.quantity1 < mix_liquid_grams) {
+				mix_liquid_grams -= mix_liquid.quantity1;
+				bottle_total_cost += mix_liquid.quantity1 * Double.parseDouble(costs[0]) +
+										mix_liquid_grams * Double.parseDouble(costs[1]);
+			}
+			else {
+				bottle_total_cost += mix_liquid_grams * Double.parseDouble(costs[0]);
+			}
 		}
 		
 		// calculate flavors cost
@@ -264,12 +331,11 @@ public class NewBottleSecondaryScene {
 				flavor.unit_costs = costs[1];
 			}
 		}
-		
 		return bottle_total_cost;
 	}
 	
 	// consume liquids grams and bottle 
-	private static void consume_main_materials(Bottle bottle,boolean reused_bottle,Liquid liquid,double used_grams){
+	private static void consume_main_materials(Bottle bottle,boolean reused_bottle,Liquid liquid,double used_grams,Liquid mix_liquid,double mix_used_grams){
 		String[] costs;
 		
 		// consume one bottle only if it is not reused one  
@@ -306,8 +372,29 @@ public class NewBottleSecondaryScene {
 			liquid.unit_costs = costs[1];
 		}
 		
-		
-		System.out.println(bottle.quantity1+" "+bottle.unit_costs);
+		// consume mix liquid grams if mix bottle
+		if(mix_liquid != null) {
+			
+			costs = mix_liquid.unit_costs.split(",");
+			
+			if(mix_liquid.quantity1 < mix_used_grams) {
+				mix_used_grams -= mix_liquid.quantity1;
+				
+				// swap
+				mix_liquid.quantity1 = mix_liquid.quantity2 - mix_used_grams;
+				mix_liquid.quantity2 = 0;
+				mix_liquid.unit_costs = costs[1];
+			}
+			else {
+				mix_liquid.quantity1 -= mix_used_grams;
+			}
+			
+			if(mix_liquid.quantity1 == 0 && mix_liquid.quantity2 > 0) {
+				mix_liquid.quantity1 = mix_liquid.quantity2;
+				mix_liquid.quantity2 = 0;
+				mix_liquid.unit_costs = costs[1];
+			}
+		}
 		
 	}
 		

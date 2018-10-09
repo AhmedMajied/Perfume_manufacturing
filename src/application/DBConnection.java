@@ -27,10 +27,16 @@ public class DBConnection {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
 			conn = DriverManager.getConnection("jdbc:mysql://sql3.freemysqlhosting.net:3306/sql3251109?"
 									+ "SslMode=Preferred&user=sql3251109&password=V6wHvf5xtd");
+		}catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
 		} catch (SQLException e) {
 			e.printStackTrace();
+			AlertBox.display("Can't connect to Database.");
 		} catch (InstantiationException e) {
 			e.printStackTrace();
+			AlertBox.display("Can't connect to Database.");
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -39,6 +45,7 @@ public class DBConnection {
 		
 	}
 	
+	/* start liquid section */
 	public static Vector<Liquid> retrieve_all_liquids(){
 		Vector<Liquid> liquids = new Vector<>();
 		
@@ -66,7 +73,30 @@ public class DBConnection {
 		return liquids;
 	}
 	
-	public static void save_new_liquid(Liquid new_liquid) {
+	public static Liquid retrieve_liquid(String liquid_name) {
+		Liquid liquid = null;
+		
+        try {
+        	prepared_stmt = conn.prepareStatement("select ID,Quantity1,Quantity2,Unit_cost from Liquid where Name = ?");
+        	prepared_stmt.setString(1, liquid_name);
+        	ResultSet result = prepared_stmt.executeQuery();
+        	
+            if(result.next()){
+            	liquid = new Liquid();
+                liquid.ID = result.getInt(1);
+                liquid.name = liquid_name;
+                liquid.quantity1 = result.getDouble(2);
+                liquid.quantity2 = result.getDouble(3);
+                liquid.unit_costs = result.getString(4);
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+        
+        return liquid;
+	}
+	
+	public static int save_new_liquid(Liquid new_liquid) {
 		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyy");
 		
 		try {
@@ -93,31 +123,15 @@ public class DBConnection {
 				stmt.setString(8, format.format(new Date()));
 				stmt.execute();
 			}
+			
+			prepared_stmt = conn.prepareStatement("select max(ID) from Liquid");
+			result = prepared_stmt.executeQuery();
+			if(result.next())
+				return result.getInt(1);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public static Liquid retrieve_liquid(String liquid_name) {
-		Liquid liquid = null;
-		
-        try {
-        	prepared_stmt = conn.prepareStatement("select ID,Quantity1,Quantity2,Unit_cost from Liquid where Name = ?");
-        	prepared_stmt.setString(1, liquid_name);
-        	ResultSet result = prepared_stmt.executeQuery();
-        	
-            if(result.next()){
-            	liquid = new Liquid();
-                liquid.ID = result.getInt(1);
-                liquid.quantity1 = result.getDouble(2);
-                liquid.quantity2 = result.getDouble(3);
-                liquid.unit_costs = result.getString(4);
-            }
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-        
-        return liquid;
+		return -1;
 	}
 	
 	public static void update_liquids(Vector<Liquid> new_liquids) {
@@ -143,7 +157,9 @@ public class DBConnection {
 			e.printStackTrace();
 		}
 	}
+	/* end liquid section */
 	
+	/* start bottle section */
 	public static Vector<Bottle> retrieve_all_bottles(){
 		Vector<Bottle> bottles = new Vector<>();
 		
@@ -212,7 +228,9 @@ public class DBConnection {
 			e.printStackTrace();
 		}
 	}
+	/* end bottle section */
 	
+	/* start flavor section */
 	public static Vector<Flavor> retrieve_all_flavors(){
 		Vector<Flavor> flavors = new Vector<>();
 		
@@ -281,13 +299,16 @@ public class DBConnection {
 			e.printStackTrace();
 		}
 	}
+	/* end flavor section */
 	
-	public static boolean save_sold_bottle(double cost, double selling_price, Liquid liquid,Bottle bottle,
-											double used_grams, Vector<Flavor> flavors) {
+	/* start manufactured bottle section */
+	public static void save_sold_bottle(double cost, double selling_price, Liquid liquid,
+					Bottle bottle,double used_grams, Vector<Flavor> flavors) {
+		
 		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyy");
 		
 		try {
-			stmt = conn.prepareCall("{call manufacture_new_bottle(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+			stmt = conn.prepareCall("{call manufacture_new_bottle(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
 		    
 			// data for Sold_bottle table
 			stmt.setDouble(1, cost);
@@ -295,76 +316,103 @@ public class DBConnection {
 		    stmt.setInt(3, liquid.ID);
 		    stmt.setInt(4, bottle.ID);
 		    stmt.setDouble(5, used_grams);
-		    stmt.setString(6, format.format(new Date()));
+		    stmt.setString(6, "Normal Bottle");
+		    stmt.setString(7, format.format(new Date()));
 		    
 		    // data for new quantities after consuming
-		    stmt.setDouble(7, liquid.quantity1);
-		    stmt.setDouble(8, liquid.quantity2);
-		    stmt.setString(9, liquid.unit_costs);
+		    stmt.setDouble(8, liquid.quantity1);
+		    stmt.setDouble(9, liquid.quantity2);
+		    stmt.setString(10, liquid.unit_costs);
 		    
-		    stmt.setDouble(10, bottle.quantity1);
-		    stmt.setDouble(11, bottle.quantity2);
-		    stmt.setString(12, bottle.unit_costs);
+		    stmt.setDouble(11, bottle.quantity1);
+		    stmt.setDouble(12, bottle.quantity2);
+		    stmt.setString(13, bottle.unit_costs);
 		    
-		    stmt.setDouble(13, flavors.get(0).quantity1);
-		    stmt.setDouble(14, flavors.get(0).quantity2);
-		    stmt.setString(15, flavors.get(0).unit_costs);
+		    stmt.setDouble(14, flavors.get(0).quantity1);
+		    stmt.setDouble(15, flavors.get(0).quantity2);
+		    stmt.setString(16, flavors.get(0).unit_costs);
 		    
-		    stmt.setDouble(16, flavors.get(1).quantity1);
-		    stmt.setDouble(17, flavors.get(1).quantity2);
-		    stmt.setString(18, flavors.get(1).unit_costs);
+		    stmt.setDouble(17, flavors.get(1).quantity1);
+		    stmt.setDouble(18, flavors.get(1).quantity2);
+		    stmt.setString(19, flavors.get(1).unit_costs);
 		    
-		    stmt.setDouble(19, flavors.get(2).quantity1);
-		    stmt.setDouble(20, flavors.get(2).quantity2);
-		    stmt.setString(21, flavors.get(2).unit_costs);
-		    
-		    boolean succeed = stmt.execute(); 
-		    return succeed;
+		    stmt.execute();
 		}catch(SQLException e) {
 			e.printStackTrace();
 		}
-		return false;
 	}
 	
-	// get materials (liquid,flavors,bottles) that quantities less than reorder point
-	public static Vector<Material> retrieve_reorder_materials(String material_name){
-		Vector<Material> materials = new Vector<>();
+	public static void save_sold_mix_bottle(double cost, double selling_price, Liquid liquid,
+			double used_grams,Liquid mix_liquid,double mix_used_grams,Bottle bottle, Vector<Flavor> flavors) {
+
+		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyy");
 		
 		try {
-        	prepared_stmt = conn.prepareStatement("select Name,Quantity1,Quantity2 "
-        			+ "from "+ material_name +" where Quantity1 + Quantity2 <= Reorder_quantity");
-        	ResultSet result = prepared_stmt.executeQuery();
-        	
-            while(result.next()){
-            	Material material = new Material();
-            	material.name = result.getString(1);
-                material.quantity1 = result.getDouble(2);
-                material.quantity2 = result.getDouble(3);
-            	materials.add(material);
-            }
+			stmt = conn.prepareCall("{call manufacture_mix_bottle(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+			
+			// data for Sold_bottle table
+			stmt.setDouble(1, cost);
+		    stmt.setDouble(2, selling_price);
+		    stmt.setInt(3, liquid.ID);
+		    stmt.setInt(4, bottle.ID);
+		    stmt.setDouble(5, used_grams);
+		    stmt.setString(6, "Mix ("+mix_used_grams+" g of "+mix_liquid.name+")");
+		    stmt.setString(7, format.format(new Date()));
+		    
+		    // data for new quantities after consuming
+		    stmt.setDouble(8, liquid.quantity1);
+		    stmt.setDouble(9, liquid.quantity2);
+		    stmt.setString(10, liquid.unit_costs);
+		    
+		    stmt.setDouble(11, bottle.quantity1);
+		    stmt.setDouble(12, bottle.quantity2);
+		    stmt.setString(13, bottle.unit_costs);
+		    
+		    stmt.setDouble(14, flavors.get(0).quantity1);
+		    stmt.setDouble(15, flavors.get(0).quantity2);
+		    stmt.setString(16, flavors.get(0).unit_costs);
+		    
+		    stmt.setDouble(17, flavors.get(1).quantity1);
+		    stmt.setDouble(18, flavors.get(1).quantity2);
+		    stmt.setString(19, flavors.get(1).unit_costs);
+		    
+		    stmt.setDouble(20, mix_liquid.ID);
+		    stmt.setDouble(21, mix_liquid.quantity1);
+		    stmt.setDouble(22, mix_liquid.quantity2);
+		    stmt.setString(23, mix_liquid.unit_costs);
+		    
+		    stmt.execute();
 		}catch(SQLException e) {
 			e.printStackTrace();
 		}
-		
-		return materials;
 	}
 	
-	public static double get_packing_cost(){
-		double packing_cost = 0;
+	public static Vector<ManufacturedBottle> retrieve_sold_bottles(){
+		Vector<ManufacturedBottle> bottles = new Vector<>();
 		
-        try {
-        	prepared_stmt = conn.prepareStatement("select Cost, Other_costs from Packing_objects");
+		try {
+			prepared_stmt = conn.prepareStatement("select Bottle.Name,Liquid.Name,Used_grams,MB.Cost,"
+					+ "Selling_price,Description,Selling_date from Bottle,Liquid,Manufactured_bottle as MB where "
+					+ "LiquidID = Liquid.ID and BottleID = Bottle.ID ");
         	ResultSet result = prepared_stmt.executeQuery();
         	
-            if(result.next()){
-            	packing_cost += result.getDouble(1);
-            	packing_cost += result.getDouble(2);
+            while(result.next()) {
+            	ManufacturedBottle bottle = new ManufacturedBottle();
+            	bottle.name = result.getString(1);
+            	bottle.liquid_name = result.getString(2);
+            	bottle.used_grams = result.getDouble(3);
+            	bottle.cost = result.getDouble(4);
+            	bottle.selling_price = result.getDouble(5);
+            	bottle.description = result.getString(6);
+            	bottle.date = result.getString(7);
+            	
+            	bottles.add(bottle);
             }
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-        
-        return packing_cost;
+		
+		return bottles;
 	}
 	
 	public static int get_sold_bottles_count() {
@@ -381,64 +429,9 @@ public class DBConnection {
 		
 		return 0;
 	}
+	/* end manufactured bottle section */
 	
-	public static double get_total_cost(){
-		try {
-			prepared_stmt = conn.prepareStatement("select Sum(Cost) from Purchase_transaction");
-        	ResultSet result = prepared_stmt.executeQuery();
-        	
-            if(result.next()) {
-            	return result.getDouble(1);
-            }
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return 0;
-	}
-	
-	public static double get_total_revenue(){
-		try {
-			prepared_stmt = conn.prepareStatement("select Sum(Selling_price) from Manufactured_bottle");
-        	ResultSet result = prepared_stmt.executeQuery();
-        	
-            if(result.next()) {
-            	return result.getDouble(1);
-            }
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return 0;
-	}
-	
-	public static Vector<ManufacturedBottle> retrieve_manufactured_bottles(){
-		Vector<ManufacturedBottle> bottles = new Vector<>();
-		
-		try {
-			prepared_stmt = conn.prepareStatement("select Bottle.Name,Liquid.Name,Used_grams,MB.Cost,"
-					+ "Selling_price,Selling_date from Bottle,Liquid,Manufactured_bottle as MB where "
-					+ "LiquidID = Liquid.ID and BottleID = Bottle.ID ");
-        	ResultSet result = prepared_stmt.executeQuery();
-        	
-            while(result.next()) {
-            	ManufacturedBottle bottle = new ManufacturedBottle();
-            	bottle.name = result.getString(1);
-            	bottle.liquid_name = result.getString(2);
-            	bottle.used_grams = result.getDouble(3);
-            	bottle.cost = result.getDouble(4);
-            	bottle.selling_price = result.getDouble(5);
-            	bottle.date = result.getString(6);
-            	
-            	bottles.add(bottle);
-            }
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return bottles;
-	}
-	
+	/* start purchased items section */
 	public static Vector<PurchasedItem> retrieve_all_purchased_items(){
 		Vector<PurchasedItem> purchased_items = new Vector<>();
 		
@@ -451,8 +444,8 @@ public class DBConnection {
             	purchased_item.ID = result.getInt(1);
             	purchased_item.name = result.getString(2);
             	purchased_item.description = result.getString(3);
-            	purchased_item.quantity = result.getFloat(4);
-            	purchased_item.cost = result.getFloat(5);
+            	purchased_item.quantity = result.getDouble(4);
+            	purchased_item.cost = result.getDouble(5);
             	purchased_item.date = result.getString(6);
             	
             	purchased_items.add(purchased_item);
@@ -501,6 +494,80 @@ public class DBConnection {
 		}catch(SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	/* end purchased items section */
+	
+	// get materials (liquid,flavors,bottles) that quantities less than reorder point
+	public static Vector<Material> retrieve_reorder_materials(String material_name){
+		Vector<Material> materials = new Vector<>();
+		
+		try {
+        	prepared_stmt = conn.prepareStatement("select Name,Quantity1,Quantity2 "
+        			+ "from "+ material_name +" where Quantity1 + Quantity2 <= Reorder_quantity");
+        	ResultSet result = prepared_stmt.executeQuery();
+        	
+            while(result.next()){
+            	Material material = new Material();
+            	material.name = result.getString(1);
+                material.quantity1 = result.getDouble(2);
+                material.quantity2 = result.getDouble(3);
+            	materials.add(material);
+            }
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return materials;
+	}
+		
+	public static double get_packing_cost(){
+		double packing_cost = 0;
+		
+        try {
+        	prepared_stmt = conn.prepareStatement("select Cost, Other_costs from Packing_objects");
+        	ResultSet result = prepared_stmt.executeQuery();
+        	
+            if(result.next()){
+            	packing_cost += result.getDouble(1);
+            	packing_cost += result.getDouble(2);
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+        
+        return packing_cost;
+	}
+	
+	
+	
+	public static double get_total_cost(){
+		try {
+			prepared_stmt = conn.prepareStatement("select Sum(Cost) from Purchase_transaction");
+        	ResultSet result = prepared_stmt.executeQuery();
+        	
+            if(result.next()) {
+            	return result.getDouble(1);
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return 0;
+	}
+	
+	public static double get_total_revenue(){
+		try {
+			prepared_stmt = conn.prepareStatement("select Sum(Selling_price) from Manufactured_bottle");
+        	ResultSet result = prepared_stmt.executeQuery();
+        	
+            if(result.next()) {
+            	return result.getDouble(1);
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return 0;
 	}
 	
 	public static void terminateConnection(){

@@ -17,6 +17,7 @@ public class PurchaseDetailsScene {
 	private PurchaseDetailsScene() {}
 	
 	public static void display() {
+		int window_width = 650;
 		
 		// table header
 		HBox table_header = new HBox();
@@ -24,26 +25,26 @@ public class PurchaseDetailsScene {
 		table_header.setStyle("-fx-background-color: white; -fx-border-style: solid; -fx-border-radius: 5px;");
 		
 		table_header.getChildren().addAll(
-				Utility.prepare_cell("Item"),
-				Utility.prepare_cell("Description"),
-				Utility.prepare_cell("Quantity"),
-				Utility.prepare_cell("Cost"),
-				Utility.prepare_cell("Date")
+				Utility.prepare_cell("Item",true),
+				Utility.prepare_cell("Description",false),
+				Utility.prepare_cell("Quantity",false),
+				Utility.prepare_cell("Cost",false),
+				Utility.prepare_cell("Date",false)
 		);
 		
 		// table data
 		Vector<PurchasedItem> purchased_items = DBConnection.retrieve_all_purchased_items();
 		
 		VBox table_data = new VBox(5);
-		table_data.setPrefWidth(800);
+		table_data.setPrefWidth(window_width);
 		for(PurchasedItem item:purchased_items) {
 			HBox row = new HBox();
 			row.getChildren().addAll(
-					Utility.prepare_cell(item.name),
-					Utility.prepare_cell(item.description),
-					Utility.prepare_cell(item.quantity+""),
-					Utility.prepare_cell(item.cost+""),
-					Utility.prepare_cell(item.date)
+					Utility.prepare_cell(item.name,true),
+					Utility.prepare_cell(item.description,false),
+					Utility.prepare_cell(item.quantity+"",false),
+					Utility.prepare_cell(item.cost+"",false),
+					Utility.prepare_cell(item.date,false)
 			);
 			
 			// row style
@@ -68,7 +69,7 @@ public class PurchaseDetailsScene {
 		root.setAlignment(Pos.BASELINE_CENTER);
 		root.getChildren().addAll(table_header,scrollPane,back_button);
 		
-		scene = new Scene(root,800,300);
+		scene = new Scene(root,window_width,300);
 		Main.stage.setScene(scene);
 		Main.stage.centerOnScreen();
 	}

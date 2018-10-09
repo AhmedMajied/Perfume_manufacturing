@@ -61,9 +61,9 @@ public class AdminScene {
 		double total_revenue = DBConnection.get_total_revenue();
 		
 		Label sold_bottles_count = new Label("Sold Bottles no: "+DBConnection.get_sold_bottles_count());
-		Label cost = new Label("Cost: "+(Math.round(total_cost))+" EP"); 
-		Label revenue = new Label("Revenue: "+(Math.round(total_revenue)+" EP"));
-		Label profit = new Label("Profit: "+(Math.round(Math.max(0,total_revenue-total_cost))+" EP"));
+		Label cost = new Label("Cost: "+(Math.round(total_cost))+" EGP"); 
+		Label revenue = new Label("Revenue: "+(Math.round(total_revenue)+" EGP"));
+		Label profit = new Label("Profit: "+(Math.round(Math.max(0,total_revenue-total_cost))+" EGP"));
 		
 		HBox hbox = new HBox(18);
 		hbox.setAlignment(Pos.CENTER);
@@ -85,8 +85,8 @@ public class AdminScene {
 		
 		// table header
 		HBox table_header = new HBox(1);
-		Pane name_col = Utility.prepare_cell(col_name);
-		Pane quantity_col = Utility.prepare_cell("Quantity");
+		Pane name_col = Utility.prepare_cell(col_name,true);
+		Pane quantity_col = Utility.prepare_cell("Quantity",true);
 		
 		table_header.getChildren().addAll(name_col,quantity_col);
 		
@@ -96,12 +96,12 @@ public class AdminScene {
 		
 		for(Material data_row: data) {
 			HBox table_row = new HBox();
-			table_row.getChildren().add(Utility.prepare_cell(data_row.name));
+			table_row.getChildren().add(Utility.prepare_cell(data_row.name,true));
 			
 			if(!title_text.equals("Bottles"))
-				table_row.getChildren().add(Utility.prepare_cell(data_row.get_total_quantity() + ""));
+				table_row.getChildren().add(Utility.prepare_cell(data_row.get_total_quantity() + "",true));
 			else
-				table_row.getChildren().add(Utility.prepare_cell((int)data_row.get_total_quantity() + ""));
+				table_row.getChildren().add(Utility.prepare_cell((int)data_row.get_total_quantity() + "",true));
 			
 			table_data.getChildren().add(table_row);
 		}
