@@ -18,6 +18,8 @@ import javafx.scene.layout.VBox;
 public class NewBottleScene{
 	
 	private static Scene scene = null;
+	private static int liquid_field_number;
+	
 	private NewBottleScene() {}
 	
 	public static void display(){
@@ -30,6 +32,10 @@ public class NewBottleScene{
 		VBox vbox1 = new VBox(10);
 		Label liquid_name = new Label("Liquid name");
 		TextField liquid_name_field = new TextField();
+		liquid_name_field.focusedProperty().addListener(e->{
+			liquid_field_number = 1;
+		});
+		
 		vbox1.getChildren().addAll(liquid_name,liquid_name_field);
 		vbox1.setAlignment(Pos.CENTER);
 		
@@ -37,6 +43,10 @@ public class NewBottleScene{
 		VBox vbox2 = new VBox(10);
 		Label mix_liquid_name = new Label("Mix Liquid name");
 		TextField mix_liquid_name_field = new TextField();
+		mix_liquid_name_field.focusedProperty().addListener(e->{
+			liquid_field_number = 2;
+		});
+		
 		vbox2.getChildren().addAll(mix_liquid_name,mix_liquid_name_field);
 		vbox2.setAlignment(Pos.CENTER);
 		
@@ -103,20 +113,20 @@ public class NewBottleScene{
 		VBox control_box = new VBox(8);
 		control_box.setStyle("-fx-background-color: white; -fx-border-style: solid; -fx-border-radius: 5px;");
 		control_box.setPadding(new Insets(8,0,8,0));
-		control_box.setMaxWidth(400);
+		control_box.setMaxWidth(450);
 		control_box.getChildren().addAll(hbox,mix_checkbox_box,buttons_box);
 		
 		VBox root = new VBox(30);
 		root.setAlignment(Pos.BASELINE_CENTER);
 		root.setPadding(new Insets(10,0,10,0));
-		root.getChildren().addAll(control_box,prepare_liquids_pane(liquid_name_field));
+		root.getChildren().addAll(control_box,prepare_liquids_pane(liquid_name_field,mix_liquid_name_field));
 		
 		scene = new Scene(root,window_width,420);		
 		Main.stage.setScene(scene);
 		Main.stage.centerOnScreen();
 	}
 	
-	private static VBox prepare_liquids_pane(TextField liquid_name_field){
+	private static VBox prepare_liquids_pane(TextField liquid_name_field,TextField mix_liquid_name_field){
 		
 		Vector<Liquid> all_liquids = DBConnection.retrieve_all_liquids();
 		
@@ -158,7 +168,16 @@ public class NewBottleScene{
 			// row click action
 			String selected_liquid_name = all_liquids.get(liquid_index).name;
 			hbox.setOnMouseClicked(e->{
-				liquid_name_field.setText(selected_liquid_name);
+				if(liquid_field_number == 1)
+					liquid_name_field.setText(selected_liquid_name);
+				else {
+					// validate if the two liquid fields have the same liquid name
+					if(liquid_name_field.getText().equals(selected_liquid_name)) {
+						AlertBox.display("Mix liquid name can't be the same as liquid name");
+					}
+					else
+						mix_liquid_name_field.setText(selected_liquid_name);
+				}	
 			});
 			
 			table_data.getChildren().add(hbox);

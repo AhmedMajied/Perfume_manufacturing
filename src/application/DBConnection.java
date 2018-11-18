@@ -8,9 +8,11 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
+
 
 public class DBConnection {
 	
@@ -171,7 +173,6 @@ public class DBConnection {
             	Bottle bottle = new Bottle();
             	bottle.ID = result.getInt("ID");
             	bottle.name = result.getString("Name");
-            	bottle.type = result.getString("Type");
                 bottle.quantity1 = result.getDouble("Quantity1");
                 bottle.quantity2 = result.getDouble("Quantity2");
                 bottle.unit_costs = result.getString("Unit_cost");
@@ -185,12 +186,12 @@ public class DBConnection {
         return bottles;
 	}
 	
-	public static Bottle retrieve_bottle(String bottle_size) {
+	public static Bottle retrieve_bottle(String bottle_name) {
 		Bottle bottle = null;
 		
         try {
         	prepared_stmt = conn.prepareStatement("select ID,Quantity1,Quantity2,Unit_cost,Liquid_used_grams from Bottle where Name = ?");
-        	prepared_stmt.setString(1, bottle_size);
+        	prepared_stmt.setString(1, bottle_name);
         	ResultSet result = prepared_stmt.executeQuery();
         	
             if(result.next()){
@@ -208,17 +209,56 @@ public class DBConnection {
         return bottle;
 	}
 	
+	public static int save_new_bottle(Bottle new_bottle) {
+		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyy");
+		
+		try {
+			if(new_bottle.unit_costs.equals("0")) {
+//				prepared_stmt = conn.prepareStatement("insert into Bottle (Name,Category,Quality,"
+//												+ "Reorder_Quantity) values(?,?,?,?,?);");
+//				
+//				prepared_stmt.setString(1, new_bottle.name);
+//				prepared_stmt.setString(3, new_bottle.category);
+//				prepared_stmt.setInt(4, new_bottle.quality);
+//				prepared_stmt.setDouble(5, new_bottle.reoreder_quantity);
+//				prepared_stmt.executeUpdate();
+			}
+			else {
+				stmt = conn.prepareCall("{call insert_new_bottle(?,?,?,?,?,?,?,?,?)}");
+				stmt.setString(1, new_bottle.name);
+				stmt.setDouble(2, new_bottle.quantity1);
+				stmt.setString(3, new_bottle.unit_costs);
+				stmt.setDouble(4, new_bottle.reoreder_quantity);
+				stmt.setDouble(5, new_bottle.liquid_used_grams);
+				stmt.setDouble(6, new_bottle.alcahol_used_grams);
+				stmt.setDouble(7, new_bottle.reinforcement_used_grams);
+				stmt.setString(8, format.format(new Date()));
+				stmt.registerOutParameter(9, Types.INTEGER);
+				stmt.execute();
+				
+				System.out.println(stmt.getInt(9));
+			}
+			
+			/*prepared_stmt = conn.prepareStatement("select max(ID) from Liquid");
+			result = prepared_stmt.executeQuery();
+			if(result.next())
+				return result.getInt(1);*/
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
 	public static void update_bottles(Vector<Bottle> new_bottles) {
 		try {
-			prepared_stmt = conn.prepareStatement("update Bottle set Name=?, Type=?, "
+			prepared_stmt = conn.prepareStatement("update Bottle set Name=?, "
 									+ "Reorder_quantity=? where ID=?"); 
 			
 			for(Bottle bottle: new_bottles) {
 				if(bottle.is_updated) {
 					prepared_stmt.setString(1, bottle.name);
-					prepared_stmt.setString(2, bottle.type);
-					prepared_stmt.setDouble(3, bottle.reoreder_quantity);
-					prepared_stmt.setInt(4, bottle.ID);
+					prepared_stmt.setDouble(2, bottle.reoreder_quantity);
+					prepared_stmt.setInt(3, bottle.ID);
 					
 					prepared_stmt.executeUpdate();
 				}
@@ -391,21 +431,21 @@ public class DBConnection {
 		Vector<ManufacturedBottle> bottles = new Vector<>();
 		
 		try {
-			prepared_stmt = conn.prepareStatement("select Bottle.Name,Liquid.Name,Used_grams,MB.Cost,"
+			prepared_stmt = conn.prepareStatement("select MB.ID,Bottle.Name,Liquid.Name,Used_grams,MB.Cost,"
 					+ "Selling_price,Description,Selling_date from Bottle,Liquid,Manufactured_bottle as MB where "
-					+ "LiquidID = Liquid.ID and BottleID = Bottle.ID ");
+					+ "LiquidID = Liquid.ID and BottleID = Bottle.ID order by MB.ID");
         	ResultSet result = prepared_stmt.executeQuery();
         	
             while(result.next()) {
             	ManufacturedBottle bottle = new ManufacturedBottle();
-            	bottle.name = result.getString(1);
-            	bottle.liquid_name = result.getString(2);
-            	bottle.used_grams = result.getDouble(3);
-            	bottle.cost = result.getDouble(4);
-            	bottle.selling_price = result.getDouble(5);
-            	bottle.description = result.getString(6);
-            	bottle.date = result.getString(7);
-            	
+            	bottle.name = result.getString(2);
+            	bottle.liquid_name = result.getString(3);
+            	bottle.used_grams = result.getDouble(4);
+            	bottle.cost = result.getDouble(5);
+            	bottle.selling_price = result.getDouble(6);
+            	bottle.description = result.getString(7);
+            	bottle.date = result.getString(8);
+
             	bottles.add(bottle);
             }
 		} catch (SQLException e) {
@@ -502,7 +542,7 @@ public class DBConnection {
 		Vector<Material> materials = new Vector<>();
 		
 		try {
-        	prepared_stmt = conn.prepareStatement("select Name,Quantity1,Quantity2 "
+        	prepared_stmt = conn.prepareStatement("select Name,Quantity1,Quantity2,Unit_cost "
         			+ "from "+ material_name +" where Quantity1 + Quantity2 <= Reorder_quantity");
         	ResultSet result = prepared_stmt.executeQuery();
         	
@@ -511,6 +551,7 @@ public class DBConnection {
             	material.name = result.getString(1);
                 material.quantity1 = result.getDouble(2);
                 material.quantity2 = result.getDouble(3);
+                material.unit_costs = result.getString(4);
             	materials.add(material);
             }
 		}catch(SQLException e) {
@@ -568,6 +609,21 @@ public class DBConnection {
 		}
 		
 		return 0;
+	}
+	
+	public static String get_password() {
+		try {
+			prepared_stmt = conn.prepareStatement("select Password from Authentication");
+        	ResultSet result = prepared_stmt.executeQuery();
+        	
+            if(result.next()) {
+            	return result.getString(1);
+            }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
 	}
 	
 	public static void terminateConnection(){

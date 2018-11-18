@@ -20,15 +20,15 @@ public class NewBottleSecondaryScene {
 	
 	private static Scene scene = null;
 	
-	public static void display(String liquid_name,String mix_liquid_name,String bottle_size){
+	public static void display(String liquid_name,String mix_liquid_name,String bottle_name){
 		Button agree_button = new Button("Agree");
 		
 		// retrieve liquid, Bottle and flavors
 		Liquid selected_liquid = DBConnection.retrieve_liquid(liquid_name);
 		Liquid selected_mix_liquid = DBConnection.retrieve_liquid(mix_liquid_name);
-		Bottle selected_bottle = DBConnection.retrieve_bottle(bottle_size);
+		Bottle selected_bottle = DBConnection.retrieve_bottle(bottle_name);
 		Vector<Flavor> flavors = DBConnection.retrieve_bottle_flavors(selected_bottle.ID);
-		
+				
 		// check if mix liquid name not found
 		if(!mix_liquid_name.equals("notmix") && selected_mix_liquid == null) {
 				AlertBox.display("Wrong Mix Liquid Name");
@@ -71,7 +71,7 @@ public class NewBottleSecondaryScene {
         SpinnerValueFactory<Double> liquid_boundary = 
         			new SpinnerValueFactory.DoubleSpinnerValueFactory
         			(Math.min(1,selected_liquid.get_total_quantity()), selected_liquid.get_total_quantity(),
-        					selected_bottle.liquid_used_grams,0.5); // liquid boundary
+        					selected_bottle.liquid_used_grams,1); // liquid boundary
         liquid_grams_spinner.setValueFactory(liquid_boundary);
         liquid_grams_spinner.setPrefWidth(72);
         
@@ -88,7 +88,7 @@ public class NewBottleSecondaryScene {
 		    mix_liquid_boundary = 
 			 			new SpinnerValueFactory.DoubleSpinnerValueFactory
 			 			(Math.min(1,selected_mix_liquid.get_total_quantity()), selected_mix_liquid.get_total_quantity(),
-			 					3,0.5); // liquid boundary
+			 					3,1); // liquid boundary
 			mix_liquid_grams_spinner.setValueFactory(mix_liquid_boundary);
 			mix_liquid_grams_spinner.setPrefWidth(72);
 		}

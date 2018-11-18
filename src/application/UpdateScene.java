@@ -18,8 +18,8 @@ public class UpdateScene {
 	private static Scene scene = null;
 	private static String current_material = "liquid";
 	public static Vector<Liquid> liquids = DBConnection.retrieve_all_liquids();
-	private static Vector<Flavor> flavors = DBConnection.retrieve_all_flavors();
-	private static Vector<Bottle> bottles = DBConnection.retrieve_all_bottles();
+	public static Vector<Flavor> flavors = DBConnection.retrieve_all_flavors();
+	public static Vector<Bottle> bottles = DBConnection.retrieve_all_bottles();
 	
 	private UpdateScene() {}
 	
@@ -170,8 +170,7 @@ public class UpdateScene {
 		}
 		else{ // material is bottle
 			table_header.getChildren().addAll(
-					Utility.prepare_cell("Size",true),
-					Utility.prepare_cell("Type",true),
+					Utility.prepare_cell("Name",true),
 					Utility.prepare_cell("Quantity",true),
 					Utility.prepare_cell("Cost",true),
 					Utility.prepare_cell("Reorder Quantity",true)
@@ -181,7 +180,6 @@ public class UpdateScene {
 				HBox row = new HBox(1);
 				row.getChildren().addAll(
 						Utility.prepare_editable_cell(bottle.name,true,true),
-						Utility.prepare_editable_cell(bottle.type,true,true),
 						Utility.prepare_editable_cell(bottle.get_diff_quantities(),false,true),
 						Utility.prepare_editable_cell(bottle.unit_costs,false,true),
 						Utility.prepare_editable_cell(bottle.reoreder_quantity+"",true,true)
@@ -235,8 +233,7 @@ public class UpdateScene {
 					HBox row = (HBox) table_data.getChildren().get(i);
 					
 					bottles.get(i).setName(((TextField)row.getChildren().get(0)).getText());
-					bottles.get(i).setType(((TextField)row.getChildren().get(1)).getText());
-					bottles.get(i).setReoreder_quantity(((TextField)row.getChildren().get(4)).getText());
+					bottles.get(i).setReoreder_quantity(((TextField)row.getChildren().get(3)).getText());
 				}
 				
 				DBConnection.update_bottles(bottles);
@@ -383,7 +380,7 @@ public class UpdateScene {
 			}
 			else{ // material is bottle
 				for(Bottle bottle:bottles) {
-					if(bottle.name.equals(material_items_field.getValue())) {
+					if(material_items_field.getValue().equals(bottle.name)) {
 						
 						String[] costs = bottle.unit_costs.split(",");
 						

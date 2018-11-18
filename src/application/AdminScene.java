@@ -45,10 +45,14 @@ public class AdminScene {
 		needed_materials.setAlignment(Pos.CENTER);
 		
 		needed_materials.getChildren().addAll(
-				prepare_reorder_table(DBConnection.retrieve_reorder_materials("Liquid"),"Liquids","Name"),
-				prepare_reorder_table(DBConnection.retrieve_reorder_materials("Flavor"),"Flavors","Name"),
-				prepare_reorder_table(DBConnection.retrieve_reorder_materials("Bottle"),"Bottles","Size")
+				prepare_reorder_table(DBConnection.retrieve_reorder_materials("Liquid"),"Liquids"),
+				prepare_reorder_table(DBConnection.retrieve_reorder_materials("Flavor"),"Flavors"),
+				prepare_reorder_table(DBConnection.retrieve_reorder_materials("Bottle"),"Bottles")
 		);
+		
+		// generate needed materials report button
+		Button generate_report_button = new Button("Generate Needed Materials Report");
+		generate_report_button.setOnAction(e-> { new ExcelUtility().generate_needed_materials_report(); });
 		
 		// statistics section
 		VBox stats_box = new VBox(7);
@@ -71,28 +75,28 @@ public class AdminScene {
 		stats_box.getChildren().addAll(hbox,sold_bottles_count);
 		
 		VBox root = new VBox(25);
-		root.getChildren().addAll(control_buttons,needed_materials,stats_box);
+		root.getChildren().addAll(control_buttons,needed_materials,generate_report_button,stats_box);
 		root.setAlignment(Pos.CENTER);
         
-        scene = new Scene(root,790,350);		
+        scene = new Scene(root,830,350);		
 		Main.stage.setScene(scene);
 		Main.stage.centerOnScreen();
 	}
 	
-	private static VBox prepare_reorder_table(Vector<Material> data,String title_text,String col_name) {
+	private static VBox prepare_reorder_table(Vector<Material> data,String title_text) {
 		
 		Label title = new Label("Needed "+title_text+" ("+data.size()+")"); // title
 		
 		// table header
 		HBox table_header = new HBox(1);
-		Pane name_col = Utility.prepare_cell(col_name,true);
+		Pane name_col = Utility.prepare_cell("Name",true);
 		Pane quantity_col = Utility.prepare_cell("Quantity",true);
 		
 		table_header.getChildren().addAll(name_col,quantity_col);
 		
 		// table data
 		VBox table_data = new VBox(5);
-		table_data.setPrefWidth(250);
+		table_data.setPrefWidth(260);
 		
 		for(Material data_row: data) {
 			HBox table_row = new HBox();

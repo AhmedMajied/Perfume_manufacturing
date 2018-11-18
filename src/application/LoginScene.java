@@ -35,7 +35,7 @@ public class LoginScene {
 		
 		Button login_button = new Button("Login");
 		login_button.setOnAction(e-> {
-			if(password_field.getText().equals("Thebest$"))
+			if(password_field.getText().equals(DBConnection.get_password()))
 				AdminScene.display();
 			else
 				AlertBox.display("Invalid password!");

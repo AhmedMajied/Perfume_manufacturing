@@ -27,7 +27,7 @@ public class AlertBox {
 		root.getChildren().addAll(alert_message, close_button);
 		root.setAlignment(Pos.CENTER);
 		
-		window.setScene(new Scene(root,240,110));
+		window.setScene(new Scene(root,270,110));
 		window.showAndWait();
 	}
 }

@@ -70,9 +70,9 @@ public class SoldBottlesScene {
  		HBox buttons_box = new HBox(10);
  		buttons_box.setAlignment(Pos.CENTER);
  		
- 		// generate report button
+ 		// generate sold bottles report button
         Button generate_report = new Button("Generate Report");
-        generate_report.setOnAction(e->{ Utility.generate_excel_file();});
+        generate_report.setOnAction(e->{ new ExcelUtility().generate_sold_bottles_report();});
  		
  		// back button
  		Button back_button = new Button("Back");
