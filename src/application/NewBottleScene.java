@@ -52,7 +52,7 @@ public class NewBottleScene{
 		
 		// bottle size
 		VBox vbox3 = new VBox(10);
-		Label bottle_size = new Label("Bottle Size");
+		Label bottle_size = new Label("Bottle Name");
 		ChoiceBox<String> bottle_size_field = new ChoiceBox<>();
 		
 		for(Bottle bottle:bottles) {

@@ -27,8 +27,7 @@ public class DBConnection {
 		
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-			conn = DriverManager.getConnection("jdbc:mysql://sql3.freemysqlhosting.net:3306/sql3251109?"
-									+ "SslMode=Preferred&user=sql3251109&password=V6wHvf5xtd");
+			conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/purfumedb?useSSL=false","root","");
 		}catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (SecurityException e) {
@@ -53,7 +52,7 @@ public class DBConnection {
 		
 		try {
 			prepared_stmt = conn.prepareStatement("select * from Liquid");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()){
             	Liquid liquid = new Liquid();
@@ -81,7 +80,7 @@ public class DBConnection {
         try {
         	prepared_stmt = conn.prepareStatement("select ID,Quantity1,Quantity2,Unit_cost from Liquid where Name = ?");
         	prepared_stmt.setString(1, liquid_name);
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()){
             	liquid = new Liquid();
@@ -152,6 +151,7 @@ public class DBConnection {
 					prepared_stmt.setInt(6, liquid.ID);
 					
 					prepared_stmt.executeUpdate();
+					liquid.is_updated = false;
 				}
 			}
 			
@@ -167,7 +167,7 @@ public class DBConnection {
 		
         try {
         	prepared_stmt = conn.prepareStatement("select * from Bottle");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()){
             	Bottle bottle = new Bottle();
@@ -176,8 +176,22 @@ public class DBConnection {
                 bottle.quantity1 = result.getDouble("Quantity1");
                 bottle.quantity2 = result.getDouble("Quantity2");
                 bottle.unit_costs = result.getString("Unit_cost");
+                bottle.liquid_used_grams = result.getDouble("Liquid_used_grams");
             	bottle.reoreder_quantity = result.getDouble("Reorder_quantity");
             	bottles.add(bottle);
+            }
+            
+            // retrieve flavors for each bottle
+            for(Bottle bottle:bottles) {
+            	prepared_stmt = conn.prepareStatement("select Used_grams from bottles_flavors where BottleID = ?");
+            	prepared_stmt.setInt(1, bottle.ID);
+            	result = prepared_stmt.executeQuery();
+            	
+            	if(result.next()) {
+            		bottle.alcahol_used_grams = result.getDouble(1);
+            		result.next();
+            		bottle.reinforcement_used_grams = result.getDouble(1);
+            	}
             }
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -192,7 +206,7 @@ public class DBConnection {
         try {
         	prepared_stmt = conn.prepareStatement("select ID,Quantity1,Quantity2,Unit_cost,Liquid_used_grams from Bottle where Name = ?");
         	prepared_stmt.setString(1, bottle_name);
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()){
             	bottle = new Bottle();
@@ -210,20 +224,23 @@ public class DBConnection {
 	}
 	
 	public static int save_new_bottle(Bottle new_bottle) {
-		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyy");
 		
 		try {
 			if(new_bottle.unit_costs.equals("0")) {
-//				prepared_stmt = conn.prepareStatement("insert into Bottle (Name,Category,Quality,"
-//												+ "Reorder_Quantity) values(?,?,?,?,?);");
-//				
-//				prepared_stmt.setString(1, new_bottle.name);
-//				prepared_stmt.setString(3, new_bottle.category);
-//				prepared_stmt.setInt(4, new_bottle.quality);
-//				prepared_stmt.setDouble(5, new_bottle.reoreder_quantity);
-//				prepared_stmt.executeUpdate();
+				stmt = conn.prepareCall("{call save_new_bottle(?,?,?,?,?,?)}");
+				stmt.setString(1, new_bottle.name);
+				stmt.setDouble(2, new_bottle.reoreder_quantity);
+				stmt.setDouble(3, new_bottle.liquid_used_grams);
+				stmt.setDouble(4, new_bottle.alcahol_used_grams);
+				stmt.setDouble(5, new_bottle.reinforcement_used_grams);
+				stmt.registerOutParameter(6, Types.INTEGER);
+				stmt.execute();
+
+				return stmt.getInt(6);
 			}
 			else {
+				SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyy");
+				
 				stmt = conn.prepareCall("{call insert_new_bottle(?,?,?,?,?,?,?,?,?)}");
 				stmt.setString(1, new_bottle.name);
 				stmt.setDouble(2, new_bottle.quantity1);
@@ -235,14 +252,9 @@ public class DBConnection {
 				stmt.setString(8, format.format(new Date()));
 				stmt.registerOutParameter(9, Types.INTEGER);
 				stmt.execute();
-				
-				System.out.println(stmt.getInt(9));
+
+				return stmt.getInt(9);
 			}
-			
-			/*prepared_stmt = conn.prepareStatement("select max(ID) from Liquid");
-			result = prepared_stmt.executeQuery();
-			if(result.next())
-				return result.getInt(1);*/
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -251,16 +263,19 @@ public class DBConnection {
 	
 	public static void update_bottles(Vector<Bottle> new_bottles) {
 		try {
-			prepared_stmt = conn.prepareStatement("update Bottle set Name=?, "
-									+ "Reorder_quantity=? where ID=?"); 
+			stmt = conn.prepareCall("{call update_bottle(?,?,?,?,?,?)}");
 			
 			for(Bottle bottle: new_bottles) {
 				if(bottle.is_updated) {
-					prepared_stmt.setString(1, bottle.name);
-					prepared_stmt.setDouble(2, bottle.reoreder_quantity);
-					prepared_stmt.setInt(3, bottle.ID);
+					stmt.setInt(1, bottle.ID);
+					stmt.setString(2, bottle.name);
+					stmt.setDouble(3, bottle.liquid_used_grams);
+					stmt.setDouble(4, bottle.alcahol_used_grams);
+					stmt.setDouble(5, bottle.reinforcement_used_grams);
+					stmt.setDouble(6, bottle.reoreder_quantity);
+					stmt.execute();
 					
-					prepared_stmt.executeUpdate();
+					bottle.is_updated = false;
 				}
 			}
 			
@@ -276,7 +291,7 @@ public class DBConnection {
 		
         try {
         	prepared_stmt = conn.prepareStatement("select * from Flavor");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()){
             	Flavor flavor = new Flavor();
@@ -301,7 +316,7 @@ public class DBConnection {
         try {
         	prepared_stmt = conn.prepareStatement("select * from Bottles_Flavors, Flavor where BottleID = ? and FlavorID = ID");
         	prepared_stmt.setInt(1, bottleID);
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()){
             	Flavor flavor = new Flavor();
@@ -332,6 +347,7 @@ public class DBConnection {
 					prepared_stmt.setInt(3, flavor.ID);
 					
 					prepared_stmt.executeUpdate();
+					flavor.is_updated = false;
 				}
 			}
 			
@@ -433,8 +449,8 @@ public class DBConnection {
 		try {
 			prepared_stmt = conn.prepareStatement("select MB.ID,Bottle.Name,Liquid.Name,Used_grams,MB.Cost,"
 					+ "Selling_price,Description,Selling_date from Bottle,Liquid,Manufactured_bottle as MB where "
-					+ "LiquidID = Liquid.ID and BottleID = Bottle.ID order by MB.ID");
-        	ResultSet result = prepared_stmt.executeQuery();
+					+ "LiquidID = Liquid.ID and BottleID = Bottle.ID order by MB.ID DESC");
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()) {
             	ManufacturedBottle bottle = new ManufacturedBottle();
@@ -458,7 +474,7 @@ public class DBConnection {
 	public static int get_sold_bottles_count() {
 		try {
         	prepared_stmt = conn.prepareStatement("select Count(*) from Manufactured_bottle");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()) {
             	return result.getInt(1);
@@ -476,8 +492,8 @@ public class DBConnection {
 		Vector<PurchasedItem> purchased_items = new Vector<>();
 		
 		try {
-			prepared_stmt = conn.prepareStatement("select * from Purchase_transaction");
-        	ResultSet result = prepared_stmt.executeQuery();
+			prepared_stmt = conn.prepareStatement("select * from Purchase_transaction order by ID DESC");
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()) {
             	PurchasedItem purchased_item = new PurchasedItem();
@@ -544,7 +560,7 @@ public class DBConnection {
 		try {
         	prepared_stmt = conn.prepareStatement("select Name,Quantity1,Quantity2,Unit_cost "
         			+ "from "+ material_name +" where Quantity1 + Quantity2 <= Reorder_quantity");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             while(result.next()){
             	Material material = new Material();
@@ -566,7 +582,7 @@ public class DBConnection {
 		
         try {
         	prepared_stmt = conn.prepareStatement("select Cost, Other_costs from Packing_objects");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()){
             	packing_cost += result.getDouble(1);
@@ -584,7 +600,7 @@ public class DBConnection {
 	public static double get_total_cost(){
 		try {
 			prepared_stmt = conn.prepareStatement("select Sum(Cost) from Purchase_transaction");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()) {
             	return result.getDouble(1);
@@ -599,7 +615,7 @@ public class DBConnection {
 	public static double get_total_revenue(){
 		try {
 			prepared_stmt = conn.prepareStatement("select Sum(Selling_price) from Manufactured_bottle");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()) {
             	return result.getDouble(1);
@@ -614,7 +630,7 @@ public class DBConnection {
 	public static String get_password() {
 		try {
 			prepared_stmt = conn.prepareStatement("select Password from Authentication");
-        	ResultSet result = prepared_stmt.executeQuery();
+        	result = prepared_stmt.executeQuery();
         	
             if(result.next()) {
             	return result.getString(1);

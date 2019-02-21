@@ -241,6 +241,7 @@ public class NewBottleSecondaryScene {
         				selected_mix_liquid,mix_liquid_grams_spinner.getValue(), selected_bottle,flavors);
         	}
         	
+        	UpdateScene.load_materials();
         	NewBottleScene.display();
         });
  		

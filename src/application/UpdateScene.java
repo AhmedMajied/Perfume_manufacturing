@@ -23,6 +23,12 @@ public class UpdateScene {
 	
 	private UpdateScene() {}
 	
+	public static void load_materials() {
+		liquids = DBConnection.retrieve_all_liquids();
+		flavors = DBConnection.retrieve_all_flavors();
+		bottles = DBConnection.retrieve_all_bottles();
+	}
+	
 	public static void display() {
 		int window_width = 900;
 		
@@ -79,11 +85,15 @@ public class UpdateScene {
 		Button insert_button = new Button("Insert New Item");
 		insert_button.setOnAction(e-> { InsertionScene.display(current_material); });
 		
+		// generate materials report button
+		Button generate_report_button = new Button("Generate Materials Report");
+		generate_report_button.setOnAction(e-> { new ExcelUtility().generate_materials_report(liquids,flavors,bottles); });
+		
 		// back button
 		Button back_button = new Button("Back");
 		back_button.setOnAction(e-> { AdminScene.display(); });
 		
-		buttons_box.getChildren().addAll(back_button,update_button,insert_button);
+		buttons_box.getChildren().addAll(back_button,update_button,insert_button,generate_report_button);
 		
 		// material table
 		VBox root = new VBox(10);
@@ -173,6 +183,9 @@ public class UpdateScene {
 					Utility.prepare_cell("Name",true),
 					Utility.prepare_cell("Quantity",true),
 					Utility.prepare_cell("Cost",true),
+					Utility.prepare_cell("Liquid Grams",true),
+					Utility.prepare_cell("Alcahol Grams",true),
+					Utility.prepare_cell("Reinforcement Grams",true),
 					Utility.prepare_cell("Reorder Quantity",true)
 			);
 			
@@ -182,6 +195,9 @@ public class UpdateScene {
 						Utility.prepare_editable_cell(bottle.name,true,true),
 						Utility.prepare_editable_cell(bottle.get_diff_quantities(),false,true),
 						Utility.prepare_editable_cell(bottle.unit_costs,false,true),
+						Utility.prepare_editable_cell(bottle.liquid_used_grams+"",true,true),
+						Utility.prepare_editable_cell(bottle.alcahol_used_grams+"",true,true),
+						Utility.prepare_editable_cell(bottle.reinforcement_used_grams+"",true,true),
 						Utility.prepare_editable_cell(bottle.reoreder_quantity+"",true,true)
 				);
 				
@@ -233,7 +249,10 @@ public class UpdateScene {
 					HBox row = (HBox) table_data.getChildren().get(i);
 					
 					bottles.get(i).setName(((TextField)row.getChildren().get(0)).getText());
-					bottles.get(i).setReoreder_quantity(((TextField)row.getChildren().get(3)).getText());
+					bottles.get(i).set_liquid_used_grams(((TextField)row.getChildren().get(3)).getText());
+					bottles.get(i).set_alcahol_used_grams(((TextField)row.getChildren().get(4)).getText());
+					bottles.get(i).set_reinforcement_used_grams(((TextField)row.getChildren().get(5)).getText());
+					bottles.get(i).setReoreder_quantity(((TextField)row.getChildren().get(6)).getText());
 				}
 				
 				DBConnection.update_bottles(bottles);
@@ -327,10 +346,8 @@ public class UpdateScene {
 						String[] costs = liquid.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price() 
-								|| liquid.quantity1 == 0) {
+						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price()) {
 							liquid.quantity1 += purchased_item.quantity;
-							liquid.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(liquid.quantity1 == 0) {
 							liquid.quantity1 += purchased_item.quantity;
@@ -338,7 +355,7 @@ public class UpdateScene {
 						}
 						else if(costs.length == 1) { // there is only one cost (new cost inserted)
 							liquid.quantity2 = purchased_item.quantity;
-							liquid.unit_costs = costs[0] + "," + (purchased_item.get_unit_price()); 
+							liquid.unit_costs = costs[0] + "," + (purchased_item.get_unit_price());
 						}
 						else { // same cost as second cost
 							liquid.quantity2 += purchased_item.quantity;
@@ -356,10 +373,8 @@ public class UpdateScene {
 						String[] costs = flavor.unit_costs.split(",");
 						
 						// check if same gram cost was exists
-						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price()
-								|| flavor.quantity1 == 0) {
+						if(Double.parseDouble(costs[0]) == purchased_item.get_unit_price()) {
 							flavor.quantity1 += purchased_item.quantity;
-							flavor.unit_costs = ""+(purchased_item.get_unit_price());
 						}
 						else if(flavor.quantity1 == 0) {
 							flavor.quantity1 += purchased_item.quantity;

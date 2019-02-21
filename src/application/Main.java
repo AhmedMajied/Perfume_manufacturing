@@ -23,13 +23,9 @@ public class Main extends Application {
         stage.setTitle("Friends Perfume");
         stage.getIcons().add(new Image("icon.png"));
         
-        stage.setScene(new LoginScene().display());
+        //stage.setScene(new LoginScene().display());
+        AdminScene.display();
         
-        /*float x = 19.5f;
-        float y = 30.23f;
-        System.out.println(Math.round(y/x * 100.0)/100.0);
-        System.out.println(y/x);
-        */
 		stage.setOnCloseRequest(e -> DBConnection.terminateConnection());
 		stage.show();	
 		
